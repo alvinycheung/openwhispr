@@ -53,7 +53,14 @@
     "meeting": {
       "speakerDetection": {
         "title": "Identifier et étiqueter les intervenants",
-        "description": "Lorsque désactivé, les transcriptions affichent « Vous » et « Autres »"
+        "description": "Lorsque désactivé, les transcriptions affichent « Vous » et « Autres »",
+        "engine": {
+          "title": "Moteur de détection des locuteurs",
+          "description": "NVIDIA Nemotron 3 suit jusqu'à huit locuteurs et les voix qui se chevauchent. Il faut NeMo-Speech.cpp installé sur cet ordinateur.",
+          "builtIn": "Intégré (pyannote)",
+          "nemotron": "NVIDIA Nemotron 3 (nemo-speech)",
+          "missing": "nemo-speech est introuvable. Installez NeMo-Speech.cpp, puis choisissez à nouveau ce moteur. D'ici là, les réunions utilisent le moteur intégré."
+        }
       }
     }
   },

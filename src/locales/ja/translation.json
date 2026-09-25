@@ -53,7 +53,14 @@
     "meeting": {
       "speakerDetection": {
         "title": "話者を識別してラベル付け",
-        "description": "オフにすると、文字起こしには「あなた」と「他の人」と表示されます"
+        "description": "オフにすると、文字起こしには「あなた」と「他の人」と表示されます",
+        "engine": {
+          "title": "話者検出エンジン",
+          "description": "NVIDIA Nemotron 3 は最大 8 人の話者と重なった発話を追跡します。このコンピューターに NeMo-Speech.cpp のインストールが必要です。",
+          "builtIn": "内蔵 (pyannote)",
+          "nemotron": "NVIDIA Nemotron 3 (nemo-speech)",
+          "missing": "nemo-speech が見つかりません。NeMo-Speech.cpp をインストールしてから、このエンジンをもう一度選択してください。それまでは会議で内蔵エンジンを使用します。"
+        }
       }
     }
   },

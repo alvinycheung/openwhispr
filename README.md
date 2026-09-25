@@ -47,7 +47,7 @@ OpenWhispr turns your voice into text, notes, and actions from your desktop. Pre
 - **AI agent** — talk to GPT-5, Claude, Gemini, Groq, Tinfoil, OpenRouter, or local models with a named voice assistant
 - **Voice Assistant hotkey** — dedicated hotkey that sends what you say straight to your AI assistant as a command, no wake word needed and no cleanup pass; highlighted text is edited in place. With auto-paste enabled, answers paste at a focused text cursor or stream into a floating panel and copy to the clipboard when no writable cursor is available. You can also opt in to sending a screenshot of your current screen as context
 - **Meeting transcription** — auto-detect Zoom, Teams, and FaceTime calls with live speaker diarization, voice fingerprinting, and Google, Microsoft, or Apple Calendar integration
-- **Local speaker diarization** — on-device speaker labelling with voice fingerprint recognition across meetings, no cloud required
+- **Local speaker diarization** — on-device speaker labelling with voice fingerprint recognition across meetings, no cloud required. Optional NVIDIA Nemotron 3 engine for up to eight speakers and overlapping speech, through a local [NeMo-Speech.cpp](https://github.com/NVIDIA/NeMo-Speech.cpp) install
 - **Notes** — create, organize, and search notes with folders, semantic search, cloud sync, and AI actions
 - **Team spaces & sharing** — free for signed-in users; share notes on the web with link, domain, or invite-only visibility, and collaborate in team spaces with roles, invitations, and server-enforced membership
 - **Audio import** — transcribe existing audio and video: drag in files, batch-upload, or paste a YouTube/audio URL, with optional speaker detection

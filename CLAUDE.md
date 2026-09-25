@@ -141,6 +141,7 @@ OpenWhispr is an Electron-based desktop dictation application that uses whisper.
 - **meetingEchoLeakDetector.js**: Audio-layer echo analysis for meeting recordings — correlates each mic chunk against the recent system-audio tap (lag search 0–500 ms in 5 ms steps) and classifies it `clean_local` / `suspected_render_bleed` / `double_talk`; drives chunk muting and per-segment suppression flags. PCM-driven tests in `test/helpers/meetingEchoLeakDetector.test.js`
 - **meetingMicGate.js**: Pure RMS/peak chunk stats + the meeting mic gate verdict (`send` / `zero` for streaming, `send` / `skip` for local) with the exported silence and bleed thresholds; `ipcHandlers.js` (`dispatchMeetingAudioBuffer`, `transcribeLocalMeetingChunk`) only applies the verdict. Unit-tested in `test/helpers/meetingMicGate.test.js`
 - **meetingMicHoldback.js**: Pure holdback/retract policy for risky mic finals — pending-final partition, retract window, risky-profile classifier, text-layer duplicate check, racing-retract candidate selection, pending-overlap partition. `ipcHandlers.js` keeps thin adapters over its closure state (`meetingDiarizationSegments`, `meetingPendingMicFinals`, `hasNearbyTranscriptMatch`). Unit-tested in `test/helpers/meetingMicHoldback.test.js`
+- **nemoSpeechDiarizer.js**: Pure pieces of the optional `nemo-speech` diarization engine (NVIDIA Nemotron 3 Diarization through NeMo-Speech.cpp): binary probe paths, `diarize` arguments, and the RTTM parser that renumbers speakers to match sherpa-onnx. `diarization.js` picks the engine from `DIARIZATION_ENGINE`, spawns whichever binary applies, and falls back to the bundled sherpa-onnx pipeline when nemo-speech is missing or fails. Unit-tested in `test/helpers/nemoSpeechDiarizer.test.js`
 - **googleCalendarManager.js**: Google Calendar sync (REST, OAuth via `googleCalendarOAuth.js`)
   - 10s socket timeout on API requests
   - Incremental sync via `syncToken`; full re-sync on 410 prunes stale events (note-linked rows retained)
@@ -367,6 +368,7 @@ Non-secret env vars persisted to `.env` (via `saveAllKeysToEnvFile()`):
 
 - `LOCAL_TRANSCRIPTION_PROVIDER`: Transcription engine (`nvidia` for Parakeet)
 - `PARAKEET_MODEL`: Selected Parakeet model name (e.g., `parakeet-tdt-0.6b-v3`)
+- `DIARIZATION_ENGINE`: `nemo-speech` routes meeting and upload diarization through a user-installed NeMo-Speech.cpp binary (`NEMO_SPEECH_PATH` overrides the probe); unset means the bundled sherpa-onnx pipeline
 
 ### 6. Language Support
 

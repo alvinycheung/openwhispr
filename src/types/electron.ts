@@ -22,6 +22,7 @@ export interface MainWindowInputRegion {
 export type ChineseScriptPreference = "simplified" | "traditional" | "as-transcribed";
 
 export type InferenceMode = "openwhispr" | "providers" | "local" | "self-hosted" | "enterprise";
+export type DiarizationEngine = "sherpa-onnx" | "nemo-speech";
 
 /** Each LLM scope's resolved mode and model, from which the main process decides the shared llama-server. */
 export interface LocalServerPrefs {
@@ -3013,7 +3014,12 @@ declare global {
       getDiarizationModelStatus?: () => Promise<{
         available: boolean;
         modelsDownloaded: boolean;
+        engine: DiarizationEngine;
+        nemoSpeechInstalled: boolean;
       }>;
+      setDiarizationEngine?: (
+        engine: DiarizationEngine
+      ) => Promise<{ success: boolean; error?: string; nemoSpeechInstalled?: boolean }>;
       deleteDiarizationModels?: () => Promise<{ success: boolean }>;
       cancelDiarizationDownload?: () => Promise<{
         success: boolean;

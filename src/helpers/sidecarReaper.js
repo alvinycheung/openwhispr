@@ -7,7 +7,7 @@ const EXPECTED_BINARY_FRAGMENTS = {
   whisper: ["whisper-server"],
   llama: ["llama-server"],
   qdrant: ["qdrant"],
-  diarization: ["sherpa-onnx-diarize"],
+  diarization: ["sherpa-onnx-diarize", "nemo-speech"],
 };
 
 // A wedged sidecar can ignore SIGTERM entirely (observed with qdrant spinning

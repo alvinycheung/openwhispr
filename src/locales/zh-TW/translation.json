@@ -53,7 +53,14 @@
     "meeting": {
       "speakerDetection": {
         "title": "辨識並標記發言者",
-        "description": "關閉後，逐字稿會顯示「你」和「其他人」"
+        "description": "關閉後，逐字稿會顯示「你」和「其他人」",
+        "engine": {
+          "title": "說話者偵測引擎",
+          "description": "NVIDIA Nemotron 3 可追蹤最多八位說話者與重疊語音。需要在此電腦上安裝 NeMo-Speech.cpp。",
+          "builtIn": "內建 (pyannote)",
+          "nemotron": "NVIDIA Nemotron 3 (nemo-speech)",
+          "missing": "找不到 nemo-speech。請安裝 NeMo-Speech.cpp，然後再次選擇此引擎。在此之前，會議將使用內建引擎。"
+        }
       }
     }
   },

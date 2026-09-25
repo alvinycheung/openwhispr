@@ -1,5 +1,6 @@
 const fs = require("fs");
 const fsPromises = require("fs").promises;
+const os = require("os");
 const path = require("path");
 const { spawn } = require("child_process");
 const debugLogger = require("./debugLogger");
@@ -20,6 +21,12 @@ const {
   computeTranscriptionTimeoutMs,
   PCM16_MONO_16K_BYTES_PER_SECOND,
 } = require("./transcriptionTimeout");
+const {
+  NEMO_SPEECH_MODEL,
+  nemoSpeechCandidates,
+  buildNemoSpeechArgs,
+  parseRttm,
+} = require("./nemoSpeechDiarizer");
 
 const DIARIZATION_TIMEOUT_MS = 3600000; // 60 minutes
 const POST_MERGE_CONTEXT_WINDOW_MS = 6000;
@@ -88,6 +95,37 @@ class DiarizationManager {
 
   isAvailable() {
     return this.getBinaryPath() !== null && this.isModelDownloaded();
+  }
+
+  // DIARIZATION_ENGINE is persisted to .env like the other startup flags; the
+  // bundled sherpa-onnx pipeline stays the default and the fallback.
+  getEngine() {
+    return process.env.DIARIZATION_ENGINE === "nemo-speech" ? "nemo-speech" : "sherpa-onnx";
+  }
+
+  // Not cached: the user installs nemo-speech while the app is running and
+  // expects the next meeting to pick it up.
+  getNemoSpeechPath() {
+    return nemoSpeechCandidates({ home: os.homedir() }).find((p) => fs.existsSync(p)) ?? null;
+  }
+
+  // nemo-speech downloads the GGUF (~100MB) on first use; pulling it when the
+  // engine is selected keeps that out of the first meeting's post-processing.
+  prefetchNemoSpeechModel() {
+    const binaryPath = this.getNemoSpeechPath();
+    if (!binaryPath) return;
+    const proc = spawn(binaryPath, ["pull", NEMO_SPEECH_MODEL], {
+      stdio: "ignore",
+      windowsHide: true,
+      detached: process.platform !== "win32",
+    });
+    proc.on("error", (err) => {
+      debugLogger.warn("nemo-speech model prefetch failed to start", { error: err.message });
+    });
+    proc.on("close", (code) => {
+      debugLogger.info("nemo-speech model prefetch finished", { code });
+    });
+    proc.unref();
   }
 
   getModelsDir() {
@@ -288,6 +326,43 @@ class DiarizationManager {
 
     if (signal?.aborted) return [];
 
+    if (!fs.existsSync(wavPath)) {
+      debugLogger.warn("Diarization input file not found", { wavPath });
+      return [];
+    }
+
+    // Scale with the recording length, but never below the 60-minute floor.
+    let timeoutMs = DIARIZATION_TIMEOUT_MS;
+    try {
+      timeoutMs = Math.max(
+        DIARIZATION_TIMEOUT_MS,
+        computeTranscriptionTimeoutMs(fs.statSync(wavPath).size / PCM16_MONO_16K_BYTES_PER_SECOND)
+      );
+    } catch {
+      // Unreadable WAV: keep the flat cap.
+    }
+
+    if (this.getEngine() === "nemo-speech") {
+      const nemoPath = this.getNemoSpeechPath();
+      if (nemoPath) {
+        // Sortformer has no clustering step: numSpeakers and threshold have
+        // nothing to map onto, and the caller's capSpeakerClusters still
+        // applies the expected-count ceiling afterwards.
+        debugLogger.info("Starting diarization", { engine: "nemo-speech", nemoPath, wavPath });
+        const segments = await this._runDiarizer({
+          binaryPath: nemoPath,
+          args: buildNemoSpeechArgs(wavPath),
+          parse: parseRttm,
+          signal,
+          timeoutMs,
+        });
+        if (segments) return segments;
+        debugLogger.warn("nemo-speech diarization failed, falling back to sherpa-onnx");
+      } else {
+        debugLogger.warn("nemo-speech binary not found, falling back to sherpa-onnx");
+      }
+    }
+
     const binaryPath = this.getBinaryPath();
     if (!binaryPath) {
       debugLogger.warn("Diarization binary not found");
@@ -296,11 +371,6 @@ class DiarizationManager {
 
     if (!this.isModelDownloaded()) {
       debugLogger.warn("Diarization models not downloaded");
-      return [];
-    }
-
-    if (!fs.existsSync(wavPath)) {
-      debugLogger.warn("Diarization input file not found", { wavPath });
       return [];
     }
 
@@ -318,23 +388,27 @@ class DiarizationManager {
     ];
 
     debugLogger.info("Starting diarization", {
+      engine: "sherpa-onnx",
       binaryPath,
       numSpeakers,
       threshold,
       wavPath,
     });
 
-    // Scale with the recording length, but never below the 60-minute floor.
-    let timeoutMs = DIARIZATION_TIMEOUT_MS;
-    try {
-      timeoutMs = Math.max(
-        DIARIZATION_TIMEOUT_MS,
-        computeTranscriptionTimeoutMs(fs.statSync(wavPath).size / PCM16_MONO_16K_BYTES_PER_SECOND)
-      );
-    } catch {
-      // Unreadable WAV: keep the flat cap.
-    }
+    return (
+      (await this._runDiarizer({
+        binaryPath,
+        args,
+        parse: (stdout) => this._parseOutput(stdout),
+        signal,
+        timeoutMs,
+      })) ?? []
+    );
+  }
 
+  // Resolves the parsed segments, [] when cancelled or timed out, and null
+  // when the process failed so the caller can try another engine.
+  _runDiarizer({ binaryPath, args, parse, signal, timeoutMs }) {
     return new Promise((resolve) => {
       let stdout = "";
       let stderr = "";
@@ -390,11 +464,11 @@ class DiarizationManager {
             code,
             stderr: stderr.slice(-500).trim(),
           });
-          resolve([]);
+          resolve(null);
           return;
         }
 
-        const segments = this._parseOutput(stdout);
+        const segments = parse(stdout);
         debugLogger.info("Diarization complete", { segmentCount: segments.length });
         resolve(segments);
       });
@@ -404,7 +478,7 @@ class DiarizationManager {
         signal?.removeEventListener("abort", onAbort);
         untrack();
         debugLogger.warn("Diarization process error", { error: err.message });
-        resolve([]);
+        resolve(null);
       });
     });
   }

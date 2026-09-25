@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Cloud, Key, Cpu, Network } from "../icons";
 import { useSettingsStore } from "../../stores/settingsStore";
@@ -8,8 +8,9 @@ import { requestSignIn } from "../../utils/requestSignIn";
 import { InferenceModeSelector, SettingsRow } from "../ui/SettingsSection";
 import type { InferenceModeOption } from "../ui/SettingsSection";
 import { Toggle } from "../ui/toggle";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import TranscriptionModelPicker from "../TranscriptionModelPicker";
-import type { InferenceMode } from "../../types/electron";
+import type { DiarizationEngine, InferenceMode } from "../../types/electron";
 import { getMeetingStreamingTranscriptionProviders } from "../../models/ModelRegistry";
 
 const MEETING_BYOK_PROVIDER_IDS = getMeetingStreamingTranscriptionProviders().map(
@@ -22,11 +23,63 @@ export function MeetingSpeakerDetectionRow() {
   const setSpeakerDiarizationEnabled = useSettingsStore((s) => s.setSpeakerDiarizationEnabled);
 
   return (
+    <>
+      <SettingsRow
+        label={t("settings.meeting.speakerDetection.title")}
+        description={t("settings.meeting.speakerDetection.description")}
+      >
+        <Toggle checked={speakerDiarizationEnabled} onChange={setSpeakerDiarizationEnabled} />
+      </SettingsRow>
+      {speakerDiarizationEnabled && <DiarizationEngineRow />}
+    </>
+  );
+}
+
+// The engine lives in the main process (.env), not the settings store: the
+// diarizer runs there and the choice must survive without the renderer.
+function DiarizationEngineRow() {
+  const { t } = useTranslation();
+  const [engine, setEngine] = useState<DiarizationEngine>("sherpa-onnx");
+  const [nemoSpeechInstalled, setNemoSpeechInstalled] = useState(true);
+
+  useEffect(() => {
+    window.electronAPI?.getDiarizationModelStatus?.().then((status) => {
+      setEngine(status.engine);
+      setNemoSpeechInstalled(status.nemoSpeechInstalled);
+    });
+  }, []);
+
+  const handleChange = async (value: string) => {
+    const next = value as DiarizationEngine;
+    setEngine(next);
+    const result = await window.electronAPI?.setDiarizationEngine?.(next);
+    if (result?.nemoSpeechInstalled != null) setNemoSpeechInstalled(result.nemoSpeechInstalled);
+  };
+
+  const missing = engine === "nemo-speech" && !nemoSpeechInstalled;
+
+  return (
     <SettingsRow
-      label={t("settings.meeting.speakerDetection.title")}
-      description={t("settings.meeting.speakerDetection.description")}
+      label={t("settings.meeting.speakerDetection.engine.title")}
+      description={
+        missing
+          ? t("settings.meeting.speakerDetection.engine.missing")
+          : t("settings.meeting.speakerDetection.engine.description")
+      }
     >
-      <Toggle checked={speakerDiarizationEnabled} onChange={setSpeakerDiarizationEnabled} />
+      <Select value={engine} onValueChange={handleChange}>
+        <SelectTrigger className="w-56">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="sherpa-onnx">
+            {t("settings.meeting.speakerDetection.engine.builtIn")}
+          </SelectItem>
+          <SelectItem value="nemo-speech">
+            {t("settings.meeting.speakerDetection.engine.nemotron")}
+          </SelectItem>
+        </SelectContent>
+      </Select>
     </SettingsRow>
   );
 }

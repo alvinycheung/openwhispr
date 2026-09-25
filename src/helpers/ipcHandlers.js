@@ -10,6 +10,7 @@ const debugLogger = require("./debugLogger");
 const { ANALYTICS_HISTORY_BACKFILL_VERSION } = require("./analytics");
 const { PARAKEET_UNSUPPORTED_OS_CODE } = require("./parakeetCapability");
 const { getModelType, isSherpaLocalProvider } = require("./parakeetModelInfo");
+const { DIARIZATION_ENGINES } = require("./nemoSpeechDiarizer");
 const { broadcastToWindows } = require("./windowBroadcast");
 const { openExternalUrl } = require("./externalUrlOpener");
 const { resolveFailedGpuBackends } = require("./whisper");
@@ -3714,6 +3715,24 @@ class IPCHandlers {
         modelsDownloaded:
           (this.diarizationManager?.isModelDownloaded() ?? false) &&
           (this.diarizationManager?.isVadModelDownloaded() ?? false),
+        engine: this.diarizationManager?.getEngine() ?? "sherpa-onnx",
+        nemoSpeechInstalled: Boolean(this.diarizationManager?.getNemoSpeechPath()),
+      };
+    });
+
+    ipcMain.handle("set-diarization-engine", async (_event, engine) => {
+      if (!DIARIZATION_ENGINES.includes(engine)) {
+        return { success: false, error: `Unknown diarization engine: ${engine}` };
+      }
+      if (engine === "nemo-speech") {
+        this._syncStartupEnv({ DIARIZATION_ENGINE: engine });
+        this.diarizationManager?.prefetchNemoSpeechModel();
+      } else {
+        this._syncStartupEnv({}, ["DIARIZATION_ENGINE"]);
+      }
+      return {
+        success: true,
+        nemoSpeechInstalled: Boolean(this.diarizationManager?.getNemoSpeechPath()),
       };
     });
 

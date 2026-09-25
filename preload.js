@@ -479,6 +479,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
   getDiarizationModelStatus: () => ipcRenderer.invoke("get-diarization-model-status"),
   deleteDiarizationModels: () => ipcRenderer.invoke("delete-diarization-models"),
   cancelDiarizationDownload: () => ipcRenderer.invoke("cancel-diarization-download"),
+  setDiarizationEngine: (engine) => ipcRenderer.invoke("set-diarization-engine", engine),
   diarizeAudioFile: (filePath, options) =>
     ipcRenderer.invoke("diarize-audio-file", filePath, options),
   mergeSpeakerText: (segments, text, duration) =>
