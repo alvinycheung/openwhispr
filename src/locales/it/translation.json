@@ -53,14 +53,14 @@
     "meeting": {
       "speakerDetection": {
         "title": "Identifica ed etichetta i partecipanti",
-        "description": "Se disattivato, le trascrizioni mostrano \"Tu\" e \"Altri\"",
-        "engine": {
-          "title": "Motore di rilevamento dei parlanti",
-          "description": "NVIDIA Nemotron 3 segue fino a otto parlanti e le voci sovrapposte. Richiede NeMo-Speech.cpp installato su questo computer.",
-          "builtIn": "Integrato (pyannote)",
-          "nemotron": "NVIDIA Nemotron 3 (nemo-speech)",
-          "missing": "nemo-speech non è stato trovato. Installa NeMo-Speech.cpp e poi scegli di nuovo questo motore. Fino ad allora le riunioni usano il motore integrato."
-        }
+        "description": "Se disattivato, le trascrizioni mostrano \"Tu\" e \"Altri\""
+      },
+      "diarizationEngine": {
+        "title": "Motore di rilevamento dei parlanti",
+        "description": "NVIDIA Nemotron 3 segue fino a otto parlanti e le voci sovrapposte. Richiede NeMo-Speech.cpp installato su questo computer.",
+        "builtIn": "Integrato (pyannote)",
+        "nemotron": "NVIDIA Nemotron 3 (nemo-speech)",
+        "missing": "nemo-speech non è stato trovato. Installa NeMo-Speech.cpp e poi scegli di nuovo questo motore. Fino ad allora le riunioni usano il motore integrato."
       }
     }
   },

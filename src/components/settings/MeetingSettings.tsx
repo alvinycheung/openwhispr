@@ -30,41 +30,43 @@ export function MeetingSpeakerDetectionRow() {
       >
         <Toggle checked={speakerDiarizationEnabled} onChange={setSpeakerDiarizationEnabled} />
       </SettingsRow>
-      {speakerDiarizationEnabled && <DiarizationEngineRow />}
+      <DiarizationEngineRow />
     </>
   );
 }
 
-// The engine lives in the main process (.env), not the settings store: the
-// diarizer runs there and the choice must survive without the renderer.
-function DiarizationEngineRow() {
+// One engine serves meeting and upload diarization, so the row does not hide
+// behind the meeting toggle. The value is kept in .env next to the other
+// main-process engine flags, so it needs no startup sync from the renderer.
+export function DiarizationEngineRow() {
   const { t } = useTranslation();
   const [engine, setEngine] = useState<DiarizationEngine>("sherpa-onnx");
   const [nemoSpeechInstalled, setNemoSpeechInstalled] = useState(true);
 
-  useEffect(() => {
+  const load = useCallback(() => {
     window.electronAPI?.getDiarizationModelStatus?.().then((status) => {
       setEngine(status.engine);
       setNemoSpeechInstalled(status.nemoSpeechInstalled);
     });
   }, []);
 
+  useEffect(load, [load]);
+
   const handleChange = async (value: string) => {
-    const next = value as DiarizationEngine;
-    setEngine(next);
-    const result = await window.electronAPI?.setDiarizationEngine?.(next);
-    if (result?.nemoSpeechInstalled != null) setNemoSpeechInstalled(result.nemoSpeechInstalled);
+    setEngine(value as DiarizationEngine);
+    await window.electronAPI?.setDiarizationEngine?.(value as DiarizationEngine);
+    load();
   };
 
   const missing = engine === "nemo-speech" && !nemoSpeechInstalled;
 
   return (
     <SettingsRow
-      label={t("settings.meeting.speakerDetection.engine.title")}
+      label={t("settings.meeting.diarizationEngine.title")}
       description={
         missing
-          ? t("settings.meeting.speakerDetection.engine.missing")
-          : t("settings.meeting.speakerDetection.engine.description")
+          ? t("settings.meeting.diarizationEngine.missing")
+          : t("settings.meeting.diarizationEngine.description")
       }
     >
       <Select value={engine} onValueChange={handleChange}>
@@ -73,10 +75,10 @@ function DiarizationEngineRow() {
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="sherpa-onnx">
-            {t("settings.meeting.speakerDetection.engine.builtIn")}
+            {t("settings.meeting.diarizationEngine.builtIn")}
           </SelectItem>
           <SelectItem value="nemo-speech">
-            {t("settings.meeting.speakerDetection.engine.nemotron")}
+            {t("settings.meeting.diarizationEngine.nemotron")}
           </SelectItem>
         </SelectContent>
       </Select>

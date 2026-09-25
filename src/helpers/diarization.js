@@ -21,12 +21,7 @@ const {
   computeTranscriptionTimeoutMs,
   PCM16_MONO_16K_BYTES_PER_SECOND,
 } = require("./transcriptionTimeout");
-const {
-  NEMO_SPEECH_MODEL,
-  nemoSpeechCandidates,
-  buildNemoSpeechArgs,
-  parseRttm,
-} = require("./nemoSpeechDiarizer");
+const { nemoSpeechCandidates, buildNemoSpeechArgs, parseRttm } = require("./nemoSpeechDiarizer");
 
 const DIARIZATION_TIMEOUT_MS = 3600000; // 60 minutes
 const POST_MERGE_CONTEXT_WINDOW_MS = 6000;
@@ -107,25 +102,6 @@ class DiarizationManager {
   // expects the next meeting to pick it up.
   getNemoSpeechPath() {
     return nemoSpeechCandidates({ home: os.homedir() }).find((p) => fs.existsSync(p)) ?? null;
-  }
-
-  // nemo-speech downloads the GGUF (~100MB) on first use; pulling it when the
-  // engine is selected keeps that out of the first meeting's post-processing.
-  prefetchNemoSpeechModel() {
-    const binaryPath = this.getNemoSpeechPath();
-    if (!binaryPath) return;
-    const proc = spawn(binaryPath, ["pull", NEMO_SPEECH_MODEL], {
-      stdio: "ignore",
-      windowsHide: true,
-      detached: process.platform !== "win32",
-    });
-    proc.on("error", (err) => {
-      debugLogger.warn("nemo-speech model prefetch failed to start", { error: err.message });
-    });
-    proc.on("close", (code) => {
-      debugLogger.info("nemo-speech model prefetch finished", { code });
-    });
-    proc.unref();
   }
 
   getModelsDir() {
@@ -342,25 +318,24 @@ class DiarizationManager {
       // Unreadable WAV: keep the flat cap.
     }
 
+    // Sortformer has no clustering step: numSpeakers and threshold have nothing
+    // to map onto, and the caller's capSpeakerClusters still applies the
+    // expected-count ceiling afterwards. nemo-speech pulls the model (~100MB)
+    // on first use, inside the timeout above.
+    const nemoPath = this.getEngine() === "nemo-speech" ? this.getNemoSpeechPath() : null;
+    if (nemoPath) {
+      debugLogger.info("Starting diarization", { engine: "nemo-speech", nemoPath, wavPath });
+      const segments = await this._runDiarizer({
+        binaryPath: nemoPath,
+        args: buildNemoSpeechArgs(wavPath),
+        parse: parseRttm,
+        signal,
+        timeoutMs,
+      });
+      if (segments) return segments;
+    }
     if (this.getEngine() === "nemo-speech") {
-      const nemoPath = this.getNemoSpeechPath();
-      if (nemoPath) {
-        // Sortformer has no clustering step: numSpeakers and threshold have
-        // nothing to map onto, and the caller's capSpeakerClusters still
-        // applies the expected-count ceiling afterwards.
-        debugLogger.info("Starting diarization", { engine: "nemo-speech", nemoPath, wavPath });
-        const segments = await this._runDiarizer({
-          binaryPath: nemoPath,
-          args: buildNemoSpeechArgs(wavPath),
-          parse: parseRttm,
-          signal,
-          timeoutMs,
-        });
-        if (segments) return segments;
-        debugLogger.warn("nemo-speech diarization failed, falling back to sherpa-onnx");
-      } else {
-        debugLogger.warn("nemo-speech binary not found, falling back to sherpa-onnx");
-      }
+      debugLogger.warn("nemo-speech unavailable, falling back to sherpa-onnx", { nemoPath });
     }
 
     const binaryPath = this.getBinaryPath();

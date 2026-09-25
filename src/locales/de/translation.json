@@ -53,14 +53,14 @@
     "meeting": {
       "speakerDetection": {
         "title": "Sprecher erkennen und beschriften",
-        "description": "Wenn deaktiviert, zeigen Transkripte „Du“ und „Andere“",
-        "engine": {
-          "title": "Engine für Sprechererkennung",
-          "description": "NVIDIA Nemotron 3 erkennt bis zu acht Sprecher und überlappende Sprache. Dafür muss NeMo-Speech.cpp auf diesem Computer installiert sein.",
-          "builtIn": "Integriert (pyannote)",
-          "nemotron": "NVIDIA Nemotron 3 (nemo-speech)",
-          "missing": "nemo-speech wurde nicht gefunden. Installiere NeMo-Speech.cpp und wähle diese Engine dann erneut. Bis dahin nutzen Meetings die integrierte Engine."
-        }
+        "description": "Wenn deaktiviert, zeigen Transkripte „Du“ und „Andere“"
+      },
+      "diarizationEngine": {
+        "title": "Engine für Sprechererkennung",
+        "description": "NVIDIA Nemotron 3 erkennt bis zu acht Sprecher und überlappende Sprache. Dafür muss NeMo-Speech.cpp auf diesem Computer installiert sein.",
+        "builtIn": "Integriert (pyannote)",
+        "nemotron": "NVIDIA Nemotron 3 (nemo-speech)",
+        "missing": "nemo-speech wurde nicht gefunden. Installiere NeMo-Speech.cpp und wähle diese Engine dann erneut. Bis dahin nutzen Meetings die integrierte Engine."
       }
     }
   },

@@ -53,14 +53,14 @@
     "meeting": {
       "speakerDetection": {
         "title": "Identify and label speakers",
-        "description": "When off, transcripts show \"You\" and \"Others\"",
-        "engine": {
-          "title": "Speaker detection engine",
-          "description": "NVIDIA Nemotron 3 tracks up to eight speakers and overlapping speech. It needs NeMo-Speech.cpp installed on this computer.",
-          "builtIn": "Built-in (pyannote)",
-          "nemotron": "NVIDIA Nemotron 3 (nemo-speech)",
-          "missing": "nemo-speech was not found. Install NeMo-Speech.cpp, then choose this engine again. Meetings use the built-in engine until then."
-        }
+        "description": "When off, transcripts show \"You\" and \"Others\""
+      },
+      "diarizationEngine": {
+        "title": "Speaker detection engine",
+        "description": "NVIDIA Nemotron 3 tracks up to eight speakers and overlapping speech. It needs NeMo-Speech.cpp installed on this computer.",
+        "builtIn": "Built-in (pyannote)",
+        "nemotron": "NVIDIA Nemotron 3 (nemo-speech)",
+        "missing": "nemo-speech was not found. Install NeMo-Speech.cpp, then choose this engine again. Meetings use the built-in engine until then."
       }
     }
   },

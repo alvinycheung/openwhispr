@@ -53,14 +53,14 @@
     "meeting": {
       "speakerDetection": {
         "title": "Распознавать и подписывать участников",
-        "description": "Если выключено, в транскриптах отображаются «Вы» и «Другие»",
-        "engine": {
-          "title": "Движок распознавания говорящих",
-          "description": "NVIDIA Nemotron 3 отслеживает до восьми говорящих и перекрывающуюся речь. Нужен установленный NeMo-Speech.cpp на этом компьютере.",
-          "builtIn": "Встроенный (pyannote)",
-          "nemotron": "NVIDIA Nemotron 3 (nemo-speech)",
-          "missing": "nemo-speech не найден. Установите NeMo-Speech.cpp и снова выберите этот движок. До тех пор встречи используют встроенный движок."
-        }
+        "description": "Если выключено, в транскриптах отображаются «Вы» и «Другие»"
+      },
+      "diarizationEngine": {
+        "title": "Движок распознавания говорящих",
+        "description": "NVIDIA Nemotron 3 отслеживает до восьми говорящих и перекрывающуюся речь. Нужен установленный NeMo-Speech.cpp на этом компьютере.",
+        "builtIn": "Встроенный (pyannote)",
+        "nemotron": "NVIDIA Nemotron 3 (nemo-speech)",
+        "missing": "nemo-speech не найден. Установите NeMo-Speech.cpp и снова выберите этот движок. До тех пор встречи используют встроенный движок."
       }
     }
   },

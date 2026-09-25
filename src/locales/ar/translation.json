@@ -3504,14 +3504,14 @@
     "meeting": {
       "speakerDetection": {
         "title": "تحديد وتسمية المتحدثين",
-        "description": "عند الإيقاف، تعرض النصوص المفرَّغة المتحدثين كـ \"أنت\" و\"آخرون\"",
-        "engine": {
-          "title": "محرك اكتشاف المتحدثين",
-          "description": "يتتبع NVIDIA Nemotron 3 ما يصل إلى ثمانية متحدثين والكلام المتداخل. يتطلب تثبيت NeMo-Speech.cpp على هذا الكمبيوتر.",
-          "builtIn": "مدمج (pyannote)",
-          "nemotron": "NVIDIA Nemotron 3 (nemo-speech)",
-          "missing": "لم يتم العثور على nemo-speech. ثبّت NeMo-Speech.cpp ثم اختر هذا المحرك مرة أخرى. حتى ذلك الحين تستخدم الاجتماعات المحرك المدمج."
-        }
+        "description": "عند الإيقاف، تعرض النصوص المفرَّغة المتحدثين كـ \"أنت\" و\"آخرون\""
+      },
+      "diarizationEngine": {
+        "title": "محرك اكتشاف المتحدثين",
+        "description": "يتتبع NVIDIA Nemotron 3 ما يصل إلى ثمانية متحدثين والكلام المتداخل. يتطلب تثبيت NeMo-Speech.cpp على هذا الكمبيوتر.",
+        "builtIn": "مدمج (pyannote)",
+        "nemotron": "NVIDIA Nemotron 3 (nemo-speech)",
+        "missing": "لم يتم العثور على nemo-speech. ثبّت NeMo-Speech.cpp ثم اختر هذا المحرك مرة أخرى. حتى ذلك الحين تستخدم الاجتماعات المحرك المدمج."
       }
     }
   },

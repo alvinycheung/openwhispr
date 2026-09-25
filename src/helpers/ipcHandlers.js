@@ -3726,14 +3726,10 @@ class IPCHandlers {
       }
       if (engine === "nemo-speech") {
         this._syncStartupEnv({ DIARIZATION_ENGINE: engine });
-        this.diarizationManager?.prefetchNemoSpeechModel();
       } else {
         this._syncStartupEnv({}, ["DIARIZATION_ENGINE"]);
       }
-      return {
-        success: true,
-        nemoSpeechInstalled: Boolean(this.diarizationManager?.getNemoSpeechPath()),
-      };
+      return { success: true };
     });
 
     ipcMain.handle("delete-diarization-models", async () => {

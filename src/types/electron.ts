@@ -3019,7 +3019,7 @@ declare global {
       }>;
       setDiarizationEngine?: (
         engine: DiarizationEngine
-      ) => Promise<{ success: boolean; error?: string; nemoSpeechInstalled?: boolean }>;
+      ) => Promise<{ success: boolean; error?: string }>;
       deleteDiarizationModels?: () => Promise<{ success: boolean }>;
       cancelDiarizationDownload?: () => Promise<{
         success: boolean;
