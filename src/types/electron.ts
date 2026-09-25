@@ -3015,11 +3015,13 @@ declare global {
         available: boolean;
         modelsDownloaded: boolean;
         engine: DiarizationEngine;
+        serverUrl: string;
         nemoSpeechInstalled: boolean;
       }>;
-      setDiarizationEngine?: (
-        engine: DiarizationEngine
-      ) => Promise<{ success: boolean; error?: string }>;
+      setDiarizationEngine?: (config: {
+        engine: DiarizationEngine;
+        serverUrl: string;
+      }) => Promise<{ success: boolean; error?: string }>;
       deleteDiarizationModels?: () => Promise<{ success: boolean }>;
       cancelDiarizationDownload?: () => Promise<{
         success: boolean;

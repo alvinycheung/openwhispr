@@ -3716,19 +3716,24 @@ class IPCHandlers {
           (this.diarizationManager?.isModelDownloaded() ?? false) &&
           (this.diarizationManager?.isVadModelDownloaded() ?? false),
         engine: this.diarizationManager?.getEngine() ?? "sherpa-onnx",
+        serverUrl: this.diarizationManager?.getServerUrl() ?? "",
         nemoSpeechInstalled: Boolean(this.diarizationManager?.getNemoSpeechPath()),
       };
     });
 
-    ipcMain.handle("set-diarization-engine", async (_event, engine) => {
+    ipcMain.handle("set-diarization-engine", async (_event, payload) => {
+      const engine = payload?.engine;
       if (!DIARIZATION_ENGINES.includes(engine)) {
         return { success: false, error: `Unknown diarization engine: ${engine}` };
       }
-      if (engine === "nemo-speech") {
-        this._syncStartupEnv({ DIARIZATION_ENGINE: engine });
-      } else {
-        this._syncStartupEnv({}, ["DIARIZATION_ENGINE"]);
-      }
+      const serverUrl = typeof payload?.serverUrl === "string" ? payload.serverUrl.trim() : "";
+      const set = {};
+      const clear = [];
+      if (engine === "nemo-speech") set.DIARIZATION_ENGINE = engine;
+      else clear.push("DIARIZATION_ENGINE");
+      if (serverUrl) set.DIARIZATION_SERVER_URL = serverUrl;
+      else clear.push("DIARIZATION_SERVER_URL");
+      this._syncStartupEnv(set, clear);
       return { success: true };
     });
 
@@ -7470,6 +7475,8 @@ class IPCHandlers {
     let meetingLocalProvider = null;
     let meetingLocalModel = null;
     let meetingLocalLanguage = null;
+    // Resolved http-batch route for provider "self-hosted" (endpoint + model).
+    let meetingRemoteRoute = null;
     let meetingLocalTranscribing = false;
     let meetingPendingMicChunks = [];
     let meetingPendingMicFinals = [];
@@ -7828,6 +7835,42 @@ class IPCHandlers {
       return started;
     };
 
+    // Same route resolver the file and dictation paths use, so URL rules
+    // (normalization, Azure shapes, http-only-on-LAN) stay in one place.
+    const resolveSelfHostedMeetingRoute = async (options) => {
+      const { resolveTranscriptionRoute } = await import("./transcriptionRoute.ts");
+      return resolveTranscriptionRoute({
+        settings: {
+          transcriptionMode: "self-hosted",
+          remoteTranscriptionUrl: options.remoteTranscriptionUrl,
+          remoteTranscriptionModel: options.remoteTranscriptionModel,
+        },
+        providers: transcriptionProviderBaseUrls(),
+        managed: false,
+        request: { effectiveLanguage: options.language || undefined },
+      });
+    };
+
+    const transcribeSelfHostedChunk = async (wav) => {
+      const route = meetingRemoteRoute;
+      if (!route) return { success: false, error: "No self-hosted route" };
+      const formData = new FormData();
+      formData.append("file", new Blob([wav], { type: "audio/wav" }), "chunk.wav");
+      if (route.model) formData.append("model", route.model);
+      if (route.language) formData.append("language", route.language);
+      const response = await net.fetch(route.endpoint, {
+        method: "POST",
+        body: formData,
+        useSessionCookies: false,
+        signal: AbortSignal.timeout(LOCAL_MEETING_CHUNK_INTERVAL_MS * 4),
+      });
+      if (!response.ok) {
+        return { success: false, error: `Self-hosted API Error: ${response.status}` };
+      }
+      const data = await response.json();
+      return { success: true, text: typeof data?.text === "string" ? data.text : "" };
+    };
+
     const transcribeLocalMeetingChunk = async (source) => {
       const chunks = meetingLocalBuffers[source];
       if (!chunks.length) return;
@@ -7865,7 +7908,9 @@ class IPCHandlers {
 
       try {
         let result;
-        if (isSherpaLocalProvider(meetingLocalProvider)) {
+        if (meetingLocalProvider === "self-hosted") {
+          result = await transcribeSelfHostedChunk(wav);
+        } else if (isSherpaLocalProvider(meetingLocalProvider)) {
           result = await this.parakeetManager.transcribeLocalParakeet(wav, {
             model: meetingLocalModel,
             language: meetingLocalLanguage,
@@ -8068,6 +8113,7 @@ class IPCHandlers {
       meetingLocalProvider = null;
       meetingLocalModel = null;
       meetingLocalLanguage = null;
+      meetingRemoteRoute = null;
       meetingLocalTranscribing = false;
       meetingPendingMicChunks = [];
       resetPendingMicFinals();
@@ -8491,7 +8537,7 @@ class IPCHandlers {
         return { success: false, error: `Unsupported provider: ${options.provider}` };
       }
 
-      if (options.provider === "local") {
+      if (options.provider === "local" || options.provider === "self-hosted") {
         return { success: true };
       }
 
@@ -8639,10 +8685,18 @@ class IPCHandlers {
           });
         }
 
-        if (options.provider === "local") {
+        if (options.provider === "local" || options.provider === "self-hosted") {
+          if (options.provider === "self-hosted") {
+            const route = await resolveSelfHostedMeetingRoute(options);
+            if (route.transport !== "http-batch") {
+              return { success: false, error: route.message || "selfHostedUnavailable" };
+            }
+            meetingRemoteRoute = route;
+          }
           meetingLocalMode = true;
-          meetingLocalProvider = options.localProvider || "whisper";
-          meetingLocalModel = options.localModel || null;
+          meetingLocalProvider =
+            options.provider === "self-hosted" ? "self-hosted" : options.localProvider || "whisper";
+          meetingLocalModel = options.localModel || meetingRemoteRoute?.model || null;
           meetingLocalLanguage = options.language || null;
           meetingLocalWin = BrowserWindow.fromWebContents(event.sender);
           meetingLocalBuffers = { mic: [], system: [] };

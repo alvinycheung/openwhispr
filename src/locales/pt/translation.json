@@ -60,7 +60,9 @@
         "description": "O NVIDIA Nemotron 3 acompanha até oito falantes e falas sobrepostas. Ele precisa do NeMo-Speech.cpp instalado neste computador.",
         "builtIn": "Integrado (pyannote)",
         "nemotron": "NVIDIA Nemotron 3 (nemo-speech)",
-        "missing": "nemo-speech não foi encontrado. Instale o NeMo-Speech.cpp e escolha este motor de novo. Até lá, as reuniões usam o motor integrado."
+        "missing": "nemo-speech não foi encontrado. Instale o NeMo-Speech.cpp e escolha este motor de novo. Até lá, as reuniões usam o motor integrado.",
+        "serverUrl": "Servidor de diarização",
+        "serverUrlDescription": "URL de um servidor nemo-speech na sua rede. Deixe vazio para executar o nemo-speech neste computador."
       }
     }
   },
@@ -3102,7 +3104,7 @@
       "description": "Transcrições e resumos estruturados",
       "back": "Voltar",
       "restrictedByOrg": "A transcrição de reuniões está restrita pela sua organização.",
-      "unsupportedSelfHosted": "A gravação de notas ainda não pode usar um endpoint auto-hospedado. Abra as Configurações e escolha Local ou um provedor de streaming.",
+      "unsupportedSelfHosted": "A gravação de notas precisa de uma URL de servidor para a transcrição auto-hospedada. Abra as Configurações, escolha Gravação de notas e informe uma.",
       "unsupportedProvider": "A gravação de notas não pode usar {{provider}} para transcrição ao vivo. Abra as Configurações e escolha Local ou um provedor de streaming.",
       "noProviderSelected": "Nenhum provedor está selecionado para a gravação de notas. Abra as Configurações e escolha Local ou um provedor de streaming.",
       "systemAudioSilent": {

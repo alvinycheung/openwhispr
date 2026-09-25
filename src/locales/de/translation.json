@@ -60,7 +60,9 @@
         "description": "NVIDIA Nemotron 3 erkennt bis zu acht Sprecher und überlappende Sprache. Dafür muss NeMo-Speech.cpp auf diesem Computer installiert sein.",
         "builtIn": "Integriert (pyannote)",
         "nemotron": "NVIDIA Nemotron 3 (nemo-speech)",
-        "missing": "nemo-speech wurde nicht gefunden. Installiere NeMo-Speech.cpp und wähle diese Engine dann erneut. Bis dahin nutzen Meetings die integrierte Engine."
+        "missing": "nemo-speech wurde nicht gefunden. Installiere NeMo-Speech.cpp und wähle diese Engine dann erneut. Bis dahin nutzen Meetings die integrierte Engine.",
+        "serverUrl": "Diarisierungsserver",
+        "serverUrlDescription": "URL eines nemo-speech-Servers in deinem Netzwerk. Leer lassen, um nemo-speech auf diesem Computer auszuführen."
       }
     }
   },
@@ -3445,7 +3447,7 @@
       "description": "Transkriptionen und strukturierte Zusammenfassungen",
       "back": "Zurück",
       "restrictedByOrg": "Die Transkription von Besprechungen ist durch Ihre Organisation eingeschränkt.",
-      "unsupportedSelfHosted": "Die Notizaufnahme kann noch keinen selbst gehosteten Endpunkt verwenden. Öffne die Einstellungen und wähle Lokal oder einen Streaming-Anbieter.",
+      "unsupportedSelfHosted": "Die Notizaufnahme braucht eine Server-URL für die selbst gehostete Transkription. Öffne die Einstellungen, wähle Notizaufnahme und gib eine ein.",
       "unsupportedProvider": "Die Notizaufnahme kann {{provider}} nicht für die Live-Transkription verwenden. Öffne die Einstellungen und wähle Lokal oder einen Streaming-Anbieter.",
       "noProviderSelected": "Für die Notizaufnahme ist kein Anbieter ausgewählt. Öffne die Einstellungen und wähle Lokal oder einen Streaming-Anbieter.",
       "systemAudioSilent": {

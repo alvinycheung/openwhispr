@@ -34,6 +34,8 @@ export function resolveMeetingTranscriptionOptions({
   whisperModel,
   parakeetModel,
   cohereModel,
+  remoteTranscriptionUrl,
+  remoteTranscriptionModel,
   selectedProvider,
   selectedModel,
   byokProviders,
@@ -70,8 +72,17 @@ export function resolveMeetingTranscriptionOptions({
   // the 1.6.10 follow-flag migration carried a dictation choice Note Recording
   // cannot serve — so they are sentinels that MeetingRecordingMount translates,
   // not English sentences. Anything after the colon is an argument.
+  // Self-hosted posts each chunk to an OpenAI-compatible /audio/transcriptions
+  // endpoint from the main process, on the same chunk loop as local mode.
   if (transcriptionMode === "self-hosted") {
-    throw new Error("unsupportedSelfHosted");
+    const url = (remoteTranscriptionUrl || "").trim();
+    if (!url) throw new Error("unsupportedSelfHosted");
+    return {
+      provider: "self-hosted",
+      remoteTranscriptionUrl: url,
+      remoteTranscriptionModel: (remoteTranscriptionModel || "").trim() || null,
+      language,
+    };
   }
 
   if (transcriptionMode !== "providers") {

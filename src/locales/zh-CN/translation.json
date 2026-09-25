@@ -60,7 +60,9 @@
         "description": "NVIDIA Nemotron 3 可跟踪最多八位说话人和重叠语音。需要在此电脑上安装 NeMo-Speech.cpp。",
         "builtIn": "内置 (pyannote)",
         "nemotron": "NVIDIA Nemotron 3 (nemo-speech)",
-        "missing": "未找到 nemo-speech。请安装 NeMo-Speech.cpp，然后再次选择此引擎。在此之前，会议将使用内置引擎。"
+        "missing": "未找到 nemo-speech。请安装 NeMo-Speech.cpp，然后再次选择此引擎。在此之前，会议将使用内置引擎。",
+        "serverUrl": "说话人分离服务器",
+        "serverUrlDescription": "网络中 nemo-speech 服务器的 URL。留空则在此电脑上运行 nemo-speech。"
       }
     }
   },
@@ -3102,7 +3104,7 @@
       "description": "转录与结构化摘要",
       "back": "返回",
       "restrictedByOrg": "会议转录已被您的组织限制。",
-      "unsupportedSelfHosted": "笔记录音暂不支持自托管端点。请打开设置，选择本地或支持流式传输的服务商。",
+      "unsupportedSelfHosted": "自托管转写需要为笔记录音设置服务器 URL。请打开设置，选择笔记录音并填写。",
       "unsupportedProvider": "笔记录音无法使用 {{provider}} 进行实时转录。请打开设置，选择本地或支持流式传输的服务商。",
       "noProviderSelected": "尚未为笔记录音选择服务商。请打开设置，选择本地或支持流式传输的服务商。",
       "systemAudioSilent": {

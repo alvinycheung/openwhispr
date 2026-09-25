@@ -47,27 +47,53 @@ function buildNemoSpeechArgs(wavPath) {
   ];
 }
 
-// RTTM: `SPEAKER <file> 1 <start> <duration> <NA> <NA> <label> <NA> <NA>`.
 // Labels are renumbered speaker_0, speaker_1, ... in order of first speech so
 // the output matches what sherpa-onnx emits and nothing downstream can tell
 // the engines apart.
+function renumberSpeakers(rows) {
+  const valid = rows.filter(
+    ({ start, end }) => Number.isFinite(start) && Number.isFinite(end) && end > start
+  );
+  valid.sort((a, b) => a.start - b.start);
+  const ids = new Map();
+  return valid.map(({ start, end, label }) => {
+    if (!ids.has(label)) ids.set(label, `speaker_${ids.size}`);
+    return { start, end, speaker: ids.get(label) };
+  });
+}
+
+// RTTM: `SPEAKER <file> 1 <start> <duration> <NA> <NA> <label> <NA> <NA>`.
 function parseRttm(stdout) {
   const rows = [];
   for (const line of stdout.split("\n")) {
     const fields = line.trim().split(/\s+/);
     if (fields[0] !== "SPEAKER" || fields.length < 8) continue;
     const start = Number(fields[3]);
-    const duration = Number(fields[4]);
-    if (!Number.isFinite(start) || !Number.isFinite(duration) || duration <= 0) continue;
-    rows.push({ start, end: start + duration, label: fields[7] });
+    rows.push({ start, end: start + Number(fields[4]), label: fields[7] });
   }
-  rows.sort((a, b) => a.start - b.start);
+  return renumberSpeakers(rows);
+}
 
-  const ids = new Map();
-  return rows.map(({ start, end, label }) => {
-    if (!ids.has(label)) ids.set(label, `speaker_${ids.size}`);
-    return { start, end, speaker: ids.get(label) };
-  });
+// `nemo-speech serve` answers POST /v1/audio/diarizations with
+// {"segments": [{"start", "end", "speaker": 1-based int}]}.
+function parseDiarizationsResponse(body) {
+  const segments = Array.isArray(body?.segments) ? body.segments : [];
+  return renumberSpeakers(
+    segments.map((s) => ({
+      start: Number(s?.start),
+      end: Number(s?.end),
+      label: String(s?.speaker),
+    }))
+  );
+}
+
+// Accepts the bare origin or a base that already ends in /v1.
+function buildDiarizationsUrl(serverUrl) {
+  const base = String(serverUrl || "")
+    .trim()
+    .replace(/\/+$/, "");
+  if (!base) return null;
+  return `${base.endsWith("/v1") ? base : `${base}/v1`}/audio/diarizations`;
 }
 
 module.exports = {
@@ -76,4 +102,6 @@ module.exports = {
   nemoSpeechCandidates,
   buildNemoSpeechArgs,
   parseRttm,
+  parseDiarizationsResponse,
+  buildDiarizationsUrl,
 };

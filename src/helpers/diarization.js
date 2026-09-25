@@ -21,7 +21,13 @@ const {
   computeTranscriptionTimeoutMs,
   PCM16_MONO_16K_BYTES_PER_SECOND,
 } = require("./transcriptionTimeout");
-const { nemoSpeechCandidates, buildNemoSpeechArgs, parseRttm } = require("./nemoSpeechDiarizer");
+const {
+  nemoSpeechCandidates,
+  buildNemoSpeechArgs,
+  parseRttm,
+  parseDiarizationsResponse,
+  buildDiarizationsUrl,
+} = require("./nemoSpeechDiarizer");
 
 const DIARIZATION_TIMEOUT_MS = 3600000; // 60 minutes
 const POST_MERGE_CONTEXT_WINDOW_MS = 6000;
@@ -102,6 +108,47 @@ class DiarizationManager {
   // expects the next meeting to pick it up.
   getNemoSpeechPath() {
     return nemoSpeechCandidates({ home: os.homedir() }).find((p) => fs.existsSync(p)) ?? null;
+  }
+
+  // A `nemo-speech serve` instance elsewhere on the network. When set, the
+  // wav is posted there and no local nemo-speech install is needed.
+  getServerUrl() {
+    return (process.env.DIARIZATION_SERVER_URL || "").trim();
+  }
+
+  // Resolves segments, or null when the server could not be used so the
+  // caller falls through to the local engines.
+  async _diarizeRemote(wavPath, { signal, timeoutMs }) {
+    const url = buildDiarizationsUrl(this.getServerUrl());
+    if (!url) return null;
+    debugLogger.info("Starting diarization", { engine: "nemo-speech", url, wavPath });
+    try {
+      const { net } = require("electron");
+      const formData = new FormData();
+      formData.append(
+        "file",
+        new Blob([fs.readFileSync(wavPath)], { type: "audio/wav" }),
+        "audio.wav"
+      );
+      const signals = [AbortSignal.timeout(timeoutMs)];
+      if (signal) signals.push(signal);
+      const response = await net.fetch(url, {
+        method: "POST",
+        body: formData,
+        signal: AbortSignal.any(signals),
+      });
+      if (!response.ok) {
+        debugLogger.warn("Diarization server error", { status: response.status });
+        return null;
+      }
+      const segments = parseDiarizationsResponse(await response.json());
+      debugLogger.info("Diarization complete", { segmentCount: segments.length });
+      return segments;
+    } catch (err) {
+      if (signal?.aborted) return [];
+      debugLogger.warn("Diarization server request failed", { error: err.message });
+      return null;
+    }
   }
 
   getModelsDir() {
@@ -320,22 +367,30 @@ class DiarizationManager {
 
     // Sortformer has no clustering step: numSpeakers and threshold have nothing
     // to map onto, and the caller's capSpeakerClusters still applies the
-    // expected-count ceiling afterwards. nemo-speech pulls the model (~100MB)
-    // on first use, inside the timeout above.
-    const nemoPath = this.getEngine() === "nemo-speech" ? this.getNemoSpeechPath() : null;
-    if (nemoPath) {
-      debugLogger.info("Starting diarization", { engine: "nemo-speech", nemoPath, wavPath });
-      const segments = await this._runDiarizer({
-        binaryPath: nemoPath,
-        args: buildNemoSpeechArgs(wavPath),
-        parse: parseRttm,
-        signal,
-        timeoutMs,
-      });
-      if (segments) return segments;
-    }
+    // expected-count ceiling afterwards. Order: server, local nemo-speech
+    // (pulls the ~100MB model on first use, inside the timeout above), then
+    // the bundled sherpa-onnx pipeline.
     if (this.getEngine() === "nemo-speech") {
-      debugLogger.warn("nemo-speech unavailable, falling back to sherpa-onnx", { nemoPath });
+      const remote = await this._diarizeRemote(wavPath, { signal, timeoutMs });
+      if (remote) return remote;
+      if (signal?.aborted) return [];
+
+      const nemoPath = this.getNemoSpeechPath();
+      if (nemoPath) {
+        debugLogger.info("Starting diarization", { engine: "nemo-speech", nemoPath, wavPath });
+        const segments = await this._runDiarizer({
+          binaryPath: nemoPath,
+          args: buildNemoSpeechArgs(wavPath),
+          parse: parseRttm,
+          signal,
+          timeoutMs,
+        });
+        if (segments) return segments;
+      }
+      debugLogger.warn("nemo-speech unavailable, falling back to sherpa-onnx", {
+        serverUrl: this.getServerUrl() || null,
+        nemoPath,
+      });
     }
 
     const binaryPath = this.getBinaryPath();

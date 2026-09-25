@@ -18,7 +18,7 @@ test("every allowed realtime provider has a streaming client (no silent OpenAI f
   const { STREAMING_CLIENT_BY_PROVIDER, ALLOWED_MEETING_PROVIDERS } = await load();
 
   for (const provider of ALLOWED_MEETING_PROVIDERS) {
-    if (provider === "local") continue;
+    if (provider === "local" || provider === "self-hosted") continue;
     assert.equal(
       typeof STREAMING_CLIENT_BY_PROVIDER[provider],
       "function",
@@ -32,6 +32,7 @@ test("allow-list accepts tinfoil-realtime and local", async () => {
 
   assert.equal(ALLOWED_MEETING_PROVIDERS.has("tinfoil-realtime"), true);
   assert.equal(ALLOWED_MEETING_PROVIDERS.has("local"), true);
+  assert.equal(ALLOWED_MEETING_PROVIDERS.has("self-hosted"), true);
 });
 
 test("every provider note recording offers is one the main process accepts", async () => {

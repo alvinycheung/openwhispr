@@ -276,7 +276,8 @@ test("closure: every allowed meeting provider has a token entry", async () => {
   const { REALTIME_TOKEN_PROVIDERS } = await loadTokens();
   const { ALLOWED_MEETING_PROVIDERS } = await loadMeeting();
   for (const provider of ALLOWED_MEETING_PROVIDERS) {
-    if (provider === "local") continue;
+    // Both run on the main-process chunk loop and never mint a realtime token.
+    if (provider === "local" || provider === "self-hosted") continue;
     assert.equal(
       typeof REALTIME_TOKEN_PROVIDERS[provider],
       "function",

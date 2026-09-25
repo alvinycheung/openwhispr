@@ -92,7 +92,7 @@ test("BYOK OpenAI never downgrades to managed cloud when its key is unavailable"
   );
 });
 
-test("self-hosted mode never follows a stale Tinfoil provider", async () => {
+test("self-hosted mode without a URL is a sentinel, never a stale Tinfoil provider", async () => {
   const { resolveMeetingTranscriptionOptions } = await load();
 
   assert.throws(
@@ -102,6 +102,25 @@ test("self-hosted mode never follows a stale Tinfoil provider", async () => {
         transcriptionMode: "self-hosted",
       }),
     { message: "unsupportedSelfHosted" }
+  );
+});
+
+test("self-hosted mode with a URL routes to the main-process chunk loop", async () => {
+  const { resolveMeetingTranscriptionOptions } = await load();
+
+  assert.deepEqual(
+    resolveMeetingTranscriptionOptions({
+      ...baseOptions,
+      transcriptionMode: "self-hosted",
+      remoteTranscriptionUrl: " http://100.68.189.60:8000/v1 ",
+      remoteTranscriptionModel: "Whisper-Large-v3-Turbo",
+    }),
+    {
+      provider: "self-hosted",
+      remoteTranscriptionUrl: "http://100.68.189.60:8000/v1",
+      remoteTranscriptionModel: "Whisper-Large-v3-Turbo",
+      language: baseOptions.language,
+    }
   );
 });
 

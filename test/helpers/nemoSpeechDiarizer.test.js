@@ -88,3 +88,38 @@ test("nemoSpeechCandidates probes the installer prefix per platform and honors t
   });
   assert.equal(override[0], "/custom/nemo-speech");
 });
+
+const {
+  parseDiarizationsResponse,
+  buildDiarizationsUrl,
+} = require("../../src/helpers/nemoSpeechDiarizer");
+
+test("parseDiarizationsResponse maps the serve JSON to sherpa-shaped segments", () => {
+  const body = {
+    segments: [
+      { start: 4.851, end: 10.859, speaker: 2 },
+      { start: 0, end: 5.169, speaker: 1 },
+      { start: 12, end: 12, speaker: 3 },
+      { start: "x", end: 1, speaker: 4 },
+    ],
+  };
+  assert.deepEqual(parseDiarizationsResponse(body), [
+    { start: 0, end: 5.169, speaker: "speaker_0" },
+    { start: 4.851, end: 10.859, speaker: "speaker_1" },
+  ]);
+  assert.deepEqual(parseDiarizationsResponse({}), []);
+  assert.deepEqual(parseDiarizationsResponse(null), []);
+});
+
+test("buildDiarizationsUrl accepts an origin or a /v1 base", () => {
+  assert.equal(
+    buildDiarizationsUrl("http://100.68.189.60:8100"),
+    "http://100.68.189.60:8100/v1/audio/diarizations"
+  );
+  assert.equal(
+    buildDiarizationsUrl(" http://host:8100/v1/ "),
+    "http://host:8100/v1/audio/diarizations"
+  );
+  assert.equal(buildDiarizationsUrl(""), null);
+  assert.equal(buildDiarizationsUrl(undefined), null);
+});

@@ -60,7 +60,9 @@
         "description": "NVIDIA Nemotron 3 tracks up to eight speakers and overlapping speech. It needs NeMo-Speech.cpp installed on this computer.",
         "builtIn": "Built-in (pyannote)",
         "nemotron": "NVIDIA Nemotron 3 (nemo-speech)",
-        "missing": "nemo-speech was not found. Install NeMo-Speech.cpp, then choose this engine again. Meetings use the built-in engine until then."
+        "missing": "nemo-speech was not found. Install NeMo-Speech.cpp, then choose this engine again. Meetings use the built-in engine until then.",
+        "serverUrl": "Diarization server",
+        "serverUrlDescription": "URL of a nemo-speech server on your network. Leave empty to run nemo-speech on this computer."
       }
     }
   },
@@ -3445,7 +3447,7 @@
       "description": "Transcriptions & structured summaries",
       "back": "Back",
       "restrictedByOrg": "Meeting transcription is restricted by your organization.",
-      "unsupportedSelfHosted": "Note Recording can't use a self-hosted endpoint yet. Open Settings and choose Local or a streaming provider.",
+      "unsupportedSelfHosted": "Note Recording needs a server URL for self-hosted transcription. Open Settings, choose Note Recording, and enter one.",
       "unsupportedProvider": "Note Recording can't use {{provider}} for live transcription. Open Settings and choose Local or a streaming provider.",
       "noProviderSelected": "No provider is selected for Note Recording. Open Settings and choose Local or a streaming provider.",
       "systemAudioSilent": {

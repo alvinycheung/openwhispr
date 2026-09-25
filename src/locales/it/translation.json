@@ -60,7 +60,9 @@
         "description": "NVIDIA Nemotron 3 segue fino a otto parlanti e le voci sovrapposte. Richiede NeMo-Speech.cpp installato su questo computer.",
         "builtIn": "Integrato (pyannote)",
         "nemotron": "NVIDIA Nemotron 3 (nemo-speech)",
-        "missing": "nemo-speech non è stato trovato. Installa NeMo-Speech.cpp e poi scegli di nuovo questo motore. Fino ad allora le riunioni usano il motore integrato."
+        "missing": "nemo-speech non è stato trovato. Installa NeMo-Speech.cpp e poi scegli di nuovo questo motore. Fino ad allora le riunioni usano il motore integrato.",
+        "serverUrl": "Server di diarizzazione",
+        "serverUrlDescription": "URL di un server nemo-speech nella tua rete. Lascia vuoto per eseguire nemo-speech su questo computer."
       }
     }
   },
@@ -3102,7 +3104,7 @@
       "description": "Trascrizioni e riassunti strutturati",
       "back": "Indietro",
       "restrictedByOrg": "La trascrizione delle riunioni è limitata dalla tua organizzazione.",
-      "unsupportedSelfHosted": "La registrazione delle note non può ancora usare un endpoint self-hosted. Apri le Impostazioni e scegli Locale o un provider in streaming.",
+      "unsupportedSelfHosted": "La registrazione delle note richiede l'URL di un server per la trascrizione self-hosted. Apri le Impostazioni, scegli Registrazione note e inseriscilo.",
       "unsupportedProvider": "La registrazione delle note non può usare {{provider}} per la trascrizione dal vivo. Apri le Impostazioni e scegli Locale o un provider in streaming.",
       "noProviderSelected": "Nessun provider selezionato per la registrazione delle note. Apri le Impostazioni e scegli Locale o un provider in streaming.",
       "systemAudioSilent": {

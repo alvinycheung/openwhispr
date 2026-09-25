@@ -60,7 +60,9 @@
         "description": "NVIDIA Nemotron 3 は最大 8 人の話者と重なった発話を追跡します。このコンピューターに NeMo-Speech.cpp のインストールが必要です。",
         "builtIn": "内蔵 (pyannote)",
         "nemotron": "NVIDIA Nemotron 3 (nemo-speech)",
-        "missing": "nemo-speech が見つかりません。NeMo-Speech.cpp をインストールしてから、このエンジンをもう一度選択してください。それまでは会議で内蔵エンジンを使用します。"
+        "missing": "nemo-speech が見つかりません。NeMo-Speech.cpp をインストールしてから、このエンジンをもう一度選択してください。それまでは会議で内蔵エンジンを使用します。",
+        "serverUrl": "話者分離サーバー",
+        "serverUrlDescription": "ネットワーク上の nemo-speech サーバーの URL。空欄にすると、このコンピューターで nemo-speech を実行します。"
       }
     }
   },
@@ -3097,7 +3099,7 @@
       "description": "文字起こしと構造化されたサマリー",
       "back": "戻る",
       "restrictedByOrg": "会議の文字起こしは組織によって制限されています。",
-      "unsupportedSelfHosted": "ノート録音はまだセルフホストのエンドポイントを利用できません。設定を開き、ローカルまたはストリーミング対応プロバイダーを選択してください。",
+      "unsupportedSelfHosted": "セルフホストの文字起こしには、ノート録音にサーバー URL が必要です。設定を開き、ノート録音を選択して URL を入力してください。",
       "unsupportedProvider": "ノート録音ではライブ文字起こしに {{provider}} を利用できません。設定を開き、ローカルまたはストリーミング対応プロバイダーを選択してください。",
       "noProviderSelected": "ノート録音のプロバイダーが選択されていません。設定を開き、ローカルまたはストリーミング対応プロバイダーを選択してください。",
       "systemAudioSilent": {

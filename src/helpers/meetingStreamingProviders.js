@@ -14,7 +14,12 @@ const STREAMING_CLIENT_BY_PROVIDER = {
 
 // Derived from the registry so an allowed provider can never lack a client
 // class and silently fall through to the OpenAI default.
-const ALLOWED_MEETING_PROVIDERS = new Set(["local", ...Object.keys(STREAMING_CLIENT_BY_PROVIDER)]);
+// "local" and "self-hosted" both run on the main-process chunk loop.
+const ALLOWED_MEETING_PROVIDERS = new Set([
+  "local",
+  "self-hosted",
+  ...Object.keys(STREAMING_CLIENT_BY_PROVIDER),
+]);
 
 const getMeetingStreamingClient = (provider) => {
   const StreamingClient = STREAMING_CLIENT_BY_PROVIDER[provider];

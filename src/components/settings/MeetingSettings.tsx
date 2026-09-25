@@ -8,8 +8,10 @@ import { requestSignIn } from "../../utils/requestSignIn";
 import { InferenceModeSelector, SettingsRow } from "../ui/SettingsSection";
 import type { InferenceModeOption } from "../ui/SettingsSection";
 import { Toggle } from "../ui/toggle";
+import { Input } from "../ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import TranscriptionModelPicker from "../TranscriptionModelPicker";
+import SelfHostedPanel from "../SelfHostedPanel";
 import type { DiarizationEngine, InferenceMode } from "../../types/electron";
 import { getMeetingStreamingTranscriptionProviders } from "../../models/ModelRegistry";
 
@@ -41,48 +43,74 @@ export function MeetingSpeakerDetectionRow() {
 export function DiarizationEngineRow() {
   const { t } = useTranslation();
   const [engine, setEngine] = useState<DiarizationEngine>("sherpa-onnx");
+  const [serverUrl, setServerUrl] = useState("");
   const [nemoSpeechInstalled, setNemoSpeechInstalled] = useState(true);
 
   const load = useCallback(() => {
     window.electronAPI?.getDiarizationModelStatus?.().then((status) => {
       setEngine(status.engine);
+      setServerUrl(status.serverUrl);
       setNemoSpeechInstalled(status.nemoSpeechInstalled);
     });
   }, []);
 
   useEffect(load, [load]);
 
-  const handleChange = async (value: string) => {
-    setEngine(value as DiarizationEngine);
-    await window.electronAPI?.setDiarizationEngine?.(value as DiarizationEngine);
+  const save = async (next: { engine: DiarizationEngine; serverUrl: string }) => {
+    await window.electronAPI?.setDiarizationEngine?.(next);
     load();
   };
 
-  const missing = engine === "nemo-speech" && !nemoSpeechInstalled;
+  const handleEngineChange = (value: string) => {
+    const next = value as DiarizationEngine;
+    setEngine(next);
+    void save({ engine: next, serverUrl });
+  };
+
+  // A server makes the local install optional, so the warning only shows when
+  // neither is available.
+  const missing = engine === "nemo-speech" && !nemoSpeechInstalled && !serverUrl.trim();
 
   return (
-    <SettingsRow
-      label={t("settings.meeting.diarizationEngine.title")}
-      description={
-        missing
-          ? t("settings.meeting.diarizationEngine.missing")
-          : t("settings.meeting.diarizationEngine.description")
-      }
-    >
-      <Select value={engine} onValueChange={handleChange}>
-        <SelectTrigger className="w-56">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="sherpa-onnx">
-            {t("settings.meeting.diarizationEngine.builtIn")}
-          </SelectItem>
-          <SelectItem value="nemo-speech">
-            {t("settings.meeting.diarizationEngine.nemotron")}
-          </SelectItem>
-        </SelectContent>
-      </Select>
-    </SettingsRow>
+    <>
+      <SettingsRow
+        label={t("settings.meeting.diarizationEngine.title")}
+        description={
+          missing
+            ? t("settings.meeting.diarizationEngine.missing")
+            : t("settings.meeting.diarizationEngine.description")
+        }
+      >
+        <Select value={engine} onValueChange={handleEngineChange}>
+          <SelectTrigger className="w-56">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="sherpa-onnx">
+              {t("settings.meeting.diarizationEngine.builtIn")}
+            </SelectItem>
+            <SelectItem value="nemo-speech">
+              {t("settings.meeting.diarizationEngine.nemotron")}
+            </SelectItem>
+          </SelectContent>
+        </Select>
+      </SettingsRow>
+      {engine === "nemo-speech" && (
+        <SettingsRow
+          label={t("settings.meeting.diarizationEngine.serverUrl")}
+          description={t("settings.meeting.diarizationEngine.serverUrlDescription")}
+        >
+          <Input
+            dir="ltr"
+            value={serverUrl}
+            onChange={(e) => setServerUrl(e.target.value)}
+            onBlur={() => void save({ engine, serverUrl })}
+            placeholder="http://100.68.189.60:8100"
+            className="h-8 w-56 text-sm"
+          />
+        </SettingsRow>
+      )}
+    </>
   );
 }
 
@@ -112,6 +140,10 @@ export function MeetingTranscriptionPanel() {
     meetingCloudTranscriptionBaseUrl,
     setMeetingCloudTranscriptionBaseUrl,
     setMeetingCloudTranscriptionMode,
+    meetingRemoteTranscriptionUrl,
+    setMeetingRemoteTranscriptionUrl,
+    meetingRemoteTranscriptionModel,
+    setMeetingRemoteTranscriptionModel,
   } = useSettingsStore();
   const {
     modes: transcriptionModes,
@@ -144,8 +176,6 @@ export function MeetingTranscriptionPanel() {
         label: t("settingsPage.transcription.modes.selfHosted"),
         description: t("settingsPage.transcription.modes.selfHostedDesc"),
         icon: <Network className="w-4 h-4" />,
-        disabled: true,
-        badge: t("common.comingSoon"),
       },
     ],
     "transcription",
@@ -154,7 +184,6 @@ export function MeetingTranscriptionPanel() {
   );
   const handleTranscriptionModeSelect = (mode: InferenceMode) => {
     if (!isModeAllowed(mode)) return;
-    if (mode === "self-hosted") return;
     if (mode === "openwhispr" && !isSignedIn) {
       requestSignIn();
       return;
@@ -233,6 +262,15 @@ export function MeetingTranscriptionPanel() {
 
       {effectiveTranscriptionMode === "providers" && renderTranscriptionPicker("cloud")}
       {effectiveTranscriptionMode === "local" && renderTranscriptionPicker("local")}
+      {effectiveTranscriptionMode === "self-hosted" && (
+        <SelfHostedPanel
+          service="transcription"
+          url={meetingRemoteTranscriptionUrl}
+          onUrlChange={setMeetingRemoteTranscriptionUrl}
+          model={meetingRemoteTranscriptionModel}
+          onModelChange={setMeetingRemoteTranscriptionModel}
+        />
+      )}
       <MeetingSpeakerDetectionRow />
     </div>
   );
